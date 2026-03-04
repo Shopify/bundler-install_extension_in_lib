@@ -32,9 +32,12 @@ module BundlerInstallExtensionInLib
     entries = Dir.entries(extension_dir) - SKIP_FILES
     return if entries.empty?
 
+    missing = entries.reject { |entry| File.exist?(File.join(lib_dir, entry)) }
+    return if missing.empty?
+
     FileUtils.mkdir_p(lib_dir)
 
-    entries.each do |entry|
+    missing.each do |entry|
       src = File.join(extension_dir, entry)
       FileUtils.cp_r(src, lib_dir, remove_destination: true, verbose: true)
     end
