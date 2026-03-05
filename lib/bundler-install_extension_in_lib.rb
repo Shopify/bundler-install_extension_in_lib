@@ -5,7 +5,7 @@ require "fileutils"
 module BundlerInstallExtensionInLib
   VERSION = "0.1.0"
 
-  SKIP_FILES = %w[. .. gem.build_complete mkmf.log].freeze
+  SKIP_FILES = %w[gem.build_complete mkmf.log gem_make.out].freeze
 
   @gem_names = []
 
@@ -29,20 +29,22 @@ module BundlerInstallExtensionInLib
 
     lib_dir = File.join(spec.full_gem_path, spec.raw_require_paths.first)
 
-    entries = Dir.entries(extension_dir) - SKIP_FILES
-    return if entries.empty?
+    ext_files = Dir.glob(File.join(extension_dir, "**", "*"))
+      .select { |f| File.file?(f) }
+      .reject { |f| SKIP_FILES.include?(File.basename(f)) }
+    return if ext_files.empty?
 
-    missing = entries.reject { |entry| File.exist?(File.join(lib_dir, entry)) }
-    return if missing.empty?
+    copied = ext_files.count do |ext_file|
+      relative = ext_file.delete_prefix("#{extension_dir}/")
+      dest = File.join(lib_dir, relative)
+      next false if File.exist?(dest)
 
-    FileUtils.mkdir_p(lib_dir)
-
-    missing.each do |entry|
-      src = File.join(extension_dir, entry)
-      FileUtils.cp_r(src, lib_dir, remove_destination: true, verbose: true)
+      FileUtils.mkdir_p(File.dirname(dest))
+      FileUtils.cp(ext_file, dest, verbose: true)
+      true
     end
 
-    Bundler.ui.info "bundler-install_extension_in_lib: Copied extensions to #{lib_dir}"
+    Bundler.ui.info "bundler-install_extension_in_lib: Copied #{copied} extension(s) to #{lib_dir}" if copied > 0
   end
 
   module DSL

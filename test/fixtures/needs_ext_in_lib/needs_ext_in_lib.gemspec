@@ -8,6 +8,7 @@ Gem::Specification.new do |s|
   s.extensions = ["ext/needs_ext_in_lib/extconf.rb"]
   s.files = [
     "lib/needs_ext_in_lib.rb",
+    "lib/needs_ext_in_lib/version.rb",
     "ext/needs_ext_in_lib/extconf.rb",
     "ext/needs_ext_in_lib/needs_ext_in_lib_ext.c",
   ]
