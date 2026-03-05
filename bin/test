@@ -1,0 +1,3 @@
+#!/bin/sh
+
+exec bundle exec megatest -j "$(getconf _NPROCESSORS_ONLN)"

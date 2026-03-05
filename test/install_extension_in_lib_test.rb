@@ -137,13 +137,19 @@ class LoadPluginHackTest < BundlerPluginTestCase
 
     repo_path = source_uri.sub("file://", "")
 
+    build_dir = File.join(@workdir, "build", "plugin")
+    FileUtils.mkdir_p(build_dir)
+    FileUtils.cp(File.join(PLUGIN_ROOT, "bundler-install_extension_in_lib.gemspec"), build_dir)
+    FileUtils.cp(File.join(PLUGIN_ROOT, "plugins.rb"), build_dir)
+    FileUtils.cp_r(File.join(PLUGIN_ROOT, "lib"), build_dir)
+
     _stdout, stderr, status = Open3.capture3(
       "gem build bundler-install_extension_in_lib.gemspec",
-      chdir: PLUGIN_ROOT,
+      chdir: build_dir,
     )
     raise "gem build plugin failed: #{stderr}" unless status.success?
 
-    gem_file = Dir.glob(File.join(PLUGIN_ROOT, "*.gem")).first
+    gem_file = Dir.glob(File.join(build_dir, "*.gem")).first
     FileUtils.mv(gem_file, File.join(repo_path, "gems"))
     capture_io { Gem::Indexer.new(repo_path).generate_index }
 
