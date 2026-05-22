@@ -9,6 +9,10 @@ module BundlerInstallExtensionInLib
 
   @gem_names = []
 
+  def self.reset
+    @gem_names = []
+  end
+
   def self.add(name)
     @gem_names << name.to_s
   end
@@ -53,6 +57,14 @@ module BundlerInstallExtensionInLib
       super(name, *args, **kwargs)
     end
   end
-  Bundler::Dsl.prepend DSL
+
+  def self.install_dsl
+    return if @dsl_installed
+
+    Bundler::Dsl.prepend DSL
+    @dsl_installed = true
+  end
+
+  install_dsl
 end
 

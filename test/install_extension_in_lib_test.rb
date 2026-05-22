@@ -9,11 +9,6 @@ class InstallExtensionInLibTest < BundlerPluginTestCase
 
     write_gemfile(<<~GEMFILE)
       plugin "bundler-install_extension_in_lib", path: #{PLUGIN_ROOT.shellescape.inspect}
-      if Bundler::Plugin.installed?("bundler-install_extension_in_lib")
-        Bundler::Plugin.send(:load_plugin, "bundler-install_extension_in_lib")
-      elsif respond_to?(:gem)
-        raise "Run `bundle install` first to install the bundler-install_extension_in_lib plugin"
-      end
       source #{source_uri.inspect}
       gem "needs_ext_in_lib", install_extension_in_lib: true
     GEMFILE
@@ -30,11 +25,6 @@ class InstallExtensionInLibTest < BundlerPluginTestCase
 
     write_gemfile(<<~GEMFILE)
       plugin "bundler-install_extension_in_lib", path: #{PLUGIN_ROOT.shellescape.inspect}
-      if Bundler::Plugin.installed?("bundler-install_extension_in_lib")
-        Bundler::Plugin.send(:load_plugin, "bundler-install_extension_in_lib")
-      elsif respond_to?(:gem)
-        raise "Run `bundle install` first to install the bundler-install_extension_in_lib plugin"
-      end
       source #{source_uri.inspect}
       gem "no_ext_in_lib"
     GEMFILE
@@ -51,11 +41,6 @@ class InstallExtensionInLibTest < BundlerPluginTestCase
 
     write_gemfile(<<~GEMFILE)
       plugin "bundler-install_extension_in_lib", path: #{PLUGIN_ROOT.shellescape.inspect}
-      if Bundler::Plugin.installed?("bundler-install_extension_in_lib")
-        Bundler::Plugin.send(:load_plugin, "bundler-install_extension_in_lib")
-      elsif respond_to?(:gem)
-        raise "Run `bundle install` first to install the bundler-install_extension_in_lib plugin"
-      end
       source #{source_uri.inspect}
       gem "no_ext_in_lib"
     GEMFILE
@@ -72,11 +57,6 @@ class InstallExtensionInLibTest < BundlerPluginTestCase
 
     write_gemfile(<<~GEMFILE)
       plugin "bundler-install_extension_in_lib", path: #{PLUGIN_ROOT.shellescape.inspect}
-      if Bundler::Plugin.installed?("bundler-install_extension_in_lib")
-        Bundler::Plugin.send(:load_plugin, "bundler-install_extension_in_lib")
-      elsif respond_to?(:gem)
-        raise "Run `bundle install` first to install the bundler-install_extension_in_lib plugin"
-      end
       source #{source_uri.inspect}
       gem "needs_ext_in_lib", install_extension_in_lib: true
     GEMFILE
@@ -93,11 +73,6 @@ class InstallExtensionInLibTest < BundlerPluginTestCase
 
     write_gemfile(<<~GEMFILE)
       plugin "bundler-install_extension_in_lib", path: #{PLUGIN_ROOT.shellescape.inspect}
-      if Bundler::Plugin.installed?("bundler-install_extension_in_lib")
-        Bundler::Plugin.send(:load_plugin, "bundler-install_extension_in_lib")
-      elsif respond_to?(:gem)
-        raise "Run `bundle install` first to install the bundler-install_extension_in_lib plugin"
-      end
       source #{source_uri.inspect}
       gem "no_ext_in_lib", install_extension_in_lib: true
     GEMFILE
@@ -113,10 +88,9 @@ class InstallExtensionInLibTest < BundlerPluginTestCase
   end
 end
 
-# Tests using the load_plugin hack for already-installed plugins (non-path).
-# This mirrors real-world usage where the plugin is installed as a gem,
-# not loaded via path:.
-class LoadPluginHackTest < BundlerPluginTestCase
+# Tests using an already-installed plugin (non-path). This mirrors real-world
+# usage where the plugin is installed as a gem, not loaded via path:.
+class InstalledPluginHookTest < BundlerPluginTestCase
   # Install the plugin into the isolated env so it's in the plugin index,
   # then we can test Gemfiles that reference it without path:.
   def install_plugin
@@ -156,17 +130,28 @@ class LoadPluginHackTest < BundlerPluginTestCase
     source_uri
   end
 
+  def test_installs_plugin_and_copies_extension_when_flagged
+    source_uri = build_gem_repo("needs_ext_in_lib")
+
+    write_gemfile(<<~GEMFILE)
+      plugin "bundler-install_extension_in_lib"
+      source #{source_uri.inspect}
+      gem "needs_ext_in_lib", install_extension_in_lib: true
+    GEMFILE
+
+    success, _stdout, stderr = bundle_install
+    assert success, "bundle install failed: #{stderr}"
+
+    lib_dir = installed_gem_lib("needs_ext_in_lib")
+    assert shared_lib_in?(lib_dir), "Expected shared library in #{lib_dir} but none found"
+  end
+
   def test_copies_extension_to_lib_when_flagged
     source_uri = build_gem_repo("needs_ext_in_lib")
     install_plugin
 
     write_gemfile(<<~GEMFILE)
       plugin "bundler-install_extension_in_lib"
-      if Bundler::Plugin.installed?("bundler-install_extension_in_lib")
-        Bundler::Plugin.send(:load_plugin, "bundler-install_extension_in_lib")
-      elsif respond_to?(:gem)
-        raise "Run `bundle install` first to install the bundler-install_extension_in_lib plugin"
-      end
       source #{source_uri.inspect}
       gem "needs_ext_in_lib", install_extension_in_lib: true
     GEMFILE
@@ -184,11 +169,6 @@ class LoadPluginHackTest < BundlerPluginTestCase
 
     write_gemfile(<<~GEMFILE)
       plugin "bundler-install_extension_in_lib"
-      if Bundler::Plugin.installed?("bundler-install_extension_in_lib")
-        Bundler::Plugin.send(:load_plugin, "bundler-install_extension_in_lib")
-      elsif respond_to?(:gem)
-        raise "Run `bundle install` first to install the bundler-install_extension_in_lib plugin"
-      end
       source #{source_uri.inspect}
       gem "no_ext_in_lib"
     GEMFILE
@@ -206,11 +186,6 @@ class LoadPluginHackTest < BundlerPluginTestCase
 
     write_gemfile(<<~GEMFILE)
       plugin "bundler-install_extension_in_lib"
-      if Bundler::Plugin.installed?("bundler-install_extension_in_lib")
-        Bundler::Plugin.send(:load_plugin, "bundler-install_extension_in_lib")
-      elsif respond_to?(:gem)
-        raise "Run `bundle install` first to install the bundler-install_extension_in_lib plugin"
-      end
       source #{source_uri.inspect}
       gem "needs_ext_in_lib", install_extension_in_lib: true
     GEMFILE
