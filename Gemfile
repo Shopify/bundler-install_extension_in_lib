@@ -2,6 +2,8 @@
 
 source "https://rubygems.org"
 
+gem "bundler", github: "ruby/rubygems", glob: "bundler/bundler.gemspec"
+
 gemspec
 
 gem "irb"

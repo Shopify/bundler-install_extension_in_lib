@@ -48,9 +48,20 @@ class BundlerPluginTestCase < Megatest::Test
     }
   end
 
+  def bundle_command(*args)
+    bundle_lib = $LOAD_PATH.find { |path| File.file?(File.join(path, "bundler.rb")) }
+    bundle_exe = File.expand_path("../exe/bundle", bundle_lib) if bundle_lib
+
+    if bundle_exe && File.executable?(bundle_exe)
+      [RbConfig.ruby, "-I", bundle_lib, bundle_exe, *args]
+    else
+      ["bundle", *args]
+    end
+  end
+
   def bundle_install
     Bundler.with_unbundled_env do
-      stdout, stderr, status = Open3.capture3(bundle_env, "bundle install", chdir: @workdir)
+      stdout, stderr, status = Open3.capture3(bundle_env, *bundle_command("install"), chdir: @workdir)
       [status.success?, stdout, stderr]
     end
   end
@@ -59,7 +70,7 @@ class BundlerPluginTestCase < Megatest::Test
     Bundler.with_unbundled_env do
       stdout, stderr, status = Open3.capture3(
         bundle_env,
-        "bundle exec ruby -e #{ruby_code.shellescape}",
+        *bundle_command("exec", "ruby", "-e", ruby_code),
         chdir: @workdir,
       )
       [status.success?, stdout, stderr]
